@@ -171,8 +171,8 @@ install() {
         --name ${CONTAINER_NAME} \
         -p ${ZT_PORT}:${ZT_PORT} \
         -p ${ZT_PORT}:${ZT_PORT}/udp \
-        -p ${API_PORT}:${API_PORT} \
-        -p ${FILE_PORT}:${FILE_PORT} \
+        -p 127.0.0.1:${API_PORT}:${API_PORT} \
+        -p 127.0.0.1:${FILE_PORT}:${FILE_PORT} \
         -e IP_ADDR4=${ipv4} \
         -e IP_ADDR6=${ipv6} \
         -e ZT_PORT=${ZT_PORT} \
@@ -238,8 +238,8 @@ install_from_config() {
         --name ${CONTAINER_NAME} \
         -p ${ZT_PORT}:${ZT_PORT} \
         -p ${ZT_PORT}:${ZT_PORT}/udp \
-        -p ${API_PORT}:${API_PORT} \
-        -p ${FILE_PORT}:${FILE_PORT} \
+        -p 127.0.0.1:${API_PORT}:${API_PORT} \
+        -p 127.0.0.1:${FILE_PORT}:${FILE_PORT} \
         -e IP_ADDR4=${ipv4} \
         -e IP_ADDR6=${ipv6} \
         -e ZT_PORT=${ZT_PORT} \
