@@ -1,43 +1,36 @@
-name: Docker Build on ZeroTier
+name: Auto Patch Deploy Script
 
 on:
   push:
     branches:
-      - master  # 当 master 分支有推送时触发
-  schedule:
-    - cron: '0 */6 * * *'  # 每6小时检查一次
-  workflow_dispatch:  # 允许手动触发
+      - main
+      # 如果你的默认分支是 master，请改成 master
 
 jobs:
-  check-and-build:
+  patch-script:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get latest Tailscale tag
-        id: get_tag
+      - name: Apply 127.0.0.1 Port Patch to deploy.sh
         run: |
-          LATEST_TAG=$(curl -s https://api.github.com/repos/zerotier/ZeroTierOne/tags | jq -r '.[0].name')
-          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
-          echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          sed -i 's/-p \${API_PORT}:\${API_PORT}/-p 127.0.0.1:\${API_PORT}:\${API_PORT}/g' deploy.sh
+          sed -i 's/-p \${FILE_PORT}:\${FILE_PORT}/-p 127.0.0.1:\${FILE_PORT}:\${FILE_PORT}/g' deploy.sh
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Build and push tagged version
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/zerotier-planet-test:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/zerotier-planet-test:${{ steps.get_tag.outputs.latest_tag }}
-          build-args: |
-            TAG=${{ steps.get_tag.outputs.latest_tag }} 
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if git diff --quiet deploy.sh; then
+            echo "deploy.sh 已经包含最新修改，无需提交。"
+          else
+            git add deploy.sh
+            git commit -m "chore: auto patch deploy.sh with 127.0.0.1 [skip ci]"
+            git push
+          fi
