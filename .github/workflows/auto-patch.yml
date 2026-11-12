@@ -3,13 +3,15 @@ name: Auto Patch Deploy Script
 on:
   push:
     branches:
-      - main
-      # 如果你的默认分支叫 master，请把上面改成 master
+      - master
+ 
+  
+  # 允许在 GitHub 网页端 Actions 页面手动点击运行
+  workflow_dispatch:
 
 jobs:
   patch-script:
     runs-on: ubuntu-latest
-    # 防止死循环：如果这次提交是由该 Action 自己发起的，则不再触发
     if: github.actor != 'github-actions[bot]'
     
     steps:
@@ -20,7 +22,6 @@ jobs:
 
       - name: Apply 127.0.0.1 Port Patch to deploy.sh
         run: |
-          # 自动将 deploy.sh 中的 API 和文件端口绑定替换为 127.0.0.1
           sed -i 's/-p \${API_PORT}:\${API_PORT}/-p 127.0.0.1:\${API_PORT}:\${API_PORT}/g' deploy.sh
           sed -i 's/-p \${FILE_PORT}:\${FILE_PORT}/-p 127.0.0.1:\${FILE_PORT}:\${FILE_PORT}/g' deploy.sh
 
@@ -29,7 +30,6 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 检查 deploy.sh 是否有改动
           if git diff --quiet deploy.sh; then
             echo "deploy.sh 已经包含最新修改，无需提交。"
           else
